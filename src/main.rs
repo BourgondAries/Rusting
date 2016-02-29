@@ -2,7 +2,11 @@ extern crate foobar;
 mod hello;
 
 fn main() {
-	println!("{}", hello::world(0, &"-".to_string(), 2));
+	let temp = hello::world(504, "/", 2);
+	match temp {
+		Some(value) => println!("Computed: {}", value),
+		_ => println!("Error, wrong operator"),
+	}
 	if false {
 		sum_stuff();
 	}
