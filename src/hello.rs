@@ -1,9 +1,9 @@
-pub fn world(lhs: i64, op: &str, rhs: i64) -> Option<i64> {
+pub fn world(lhs: i64, op: &str, rhs: i64) -> Result<i64, &str> {
 	match op {
-		"+" => Some(lhs + rhs),
-		"-" => Some(lhs - rhs),
-		"*" => Some(lhs * rhs),
-		"/" => Some(lhs / rhs),
-		_ => None,
+		"+" => Ok(lhs + rhs),
+		"-" => Ok(lhs - rhs),
+		"*" => Ok(lhs * rhs),
+		"/" => Ok(lhs / rhs),
+		_ => Err("No suitable operator"),
 	}
 }

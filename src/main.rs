@@ -4,8 +4,8 @@ mod hello;
 fn main() {
 	let temp = hello::world(504, "/", 2);
 	match temp {
-		Some(value) => println!("Computed: {}", value),
-		_ => println!("Error, wrong operator"),
+		Ok(value) => println!("Computed: {}", value),
+		Err(msg) => println!("Error: {}", msg),
 	}
 	if false {
 		sum_stuff();
