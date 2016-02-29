@@ -3,29 +3,30 @@ mod hello;
 
 fn main() {
 	println!("Enter numbers, enter zero or c-d to exit.");
-	let mut reader = std::io::stdin();
+	let reader = std::io::stdin();
 	let mut sum = 0i64;
-	let mut line = String::from("0");
+	let mut line: String;
 
-	while line != "".to_string() {
+	loop {
 		line = String::new();
 		reader.read_line(&mut line)
 			.ok()
 			.expect("Failed to read line");
 		let value: Option<i64> = line.trim().parse::<i64>().ok();
-		println!("Line: {}", line);
-		let integer = match value {
+		print!("You entered: {}", line);
+		let value = match value {
 			Some(x) => {
-				println!("Not continue");
+				if x == 0 {
+					break;
+				}
 				x
 			},
 			None => {
-				println!("Continue");
+				println!("Could not decode.");
 				continue;
 			},
 		};
-		println!("Hey!");
-		sum += integer;
+		sum += value;
 	}
 	println!("{}", sum);
 	return;
