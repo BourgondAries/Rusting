@@ -7,6 +7,10 @@ fn main() {
 		Ok(value) => println!("Computed: {}", value),
 		Err(msg) => println!("Error: {}", msg),
 	}
+	let mut vector = vec![1, 2, -84, 3, 2, -4, 3, 4, 5, 9, -3, 1];
+	while let Some(x) = vector.pop() {
+		println!("Popped: {}", x);
+	}
 	if false {
 		sum_stuff();
 	}
