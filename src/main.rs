@@ -1,27 +1,34 @@
 extern crate foobar;
+extern crate argparse;
 #[macro_use]
 extern crate log;
 extern crate env_logger;
 mod hello;
 
+use argparse::{ArgumentParser, StoreTrue, Store};
+
+#[allow(dead_code)]
 struct MyErr {
 	message: String,
 }
 
+#[allow(dead_code)]
 impl MyErr {
 	fn to_string(&self) -> &String {
 		&self.message
 	}
 }
+#[allow(dead_code)]
 fn fbor<'a>() {
 	let x = 12;
-	let y: &'a i32 = &x;
 }
 
+#[allow(dead_code)]
 fn tess(a: i64) {
 	fbor();
 	println!("{}", a);
 }
+#[allow(dead_code)]
 fn tropp() {
 	env_logger::init().unwrap();
 	info!(target: "Cool", "Starting tropp");
@@ -35,9 +42,32 @@ fn tropp() {
 	}
 }
 
+fn oodude<'a, 'b>(lhs: &'a str, rhs: &'b str) -> &'b str {
+	rhs
+}
+
 fn main() {
+	let mut verbose = false;
+	let mut name = "World".to_string();
+	{
+		let mut ap = ArgumentParser::new();
+		ap.set_description("Greet someone");
+		ap.refer(&mut verbose)
+			.add_option(&["-v", "--verbose"], StoreTrue,
+			"Output verbose mode");
+		ap.refer(&mut name)
+			.add_option(&["--name"], Store,
+			"Name for the greeting");
+		ap.parse_args_or_exit();
+	}
+	if verbose {
+		println!("Verbose!");
+	}
+	println!("{}", name);
+}
+#[allow(dead_code)]
+fn cool() {
 	tropp();
-	return;
 	let temp = hello::world(504, "/", 2);
 	match temp {
 		Ok(value) => println!("Computed: {}", value),
@@ -52,6 +82,7 @@ fn main() {
 	}
 }
 
+#[allow(dead_code)]
 fn sum_stuff() {
 	println!("Enter numbers, enter zero or c-d to exit.");
 	let reader = std::io::stdin();
