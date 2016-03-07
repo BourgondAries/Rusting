@@ -12,7 +12,14 @@ use std::process::exit;
 use std::collections::HashMap;
 use std::str::FromStr;
 
-type Table = Vec<Vec<Vec<Option<usize>>>>;
+#[derive(Clone)]
+enum Token {
+	Transist(usize),
+	Finalize(String),
+	None,
+}
+
+type Table = Vec<Vec<Token>>;
 
 fn break_line_into_name_and_regex(line: &String) -> (&str, &str) {
 	let mut counter = 0;
@@ -64,55 +71,74 @@ fn get_entries_in_map(filename: &String, verbose: &bool) -> Entries {
 	map
 }
 
-/*
 fn print_transition_table(table: &Table) {
 	for i in table {
 		for j in i {
-			for k in j {
-				match k {
-					Some(state) => print!("{}", state),
-					None => print!("{}", " "),
-				}
-				print!("{}", k);
+			match *j {
+				Token::Transist(ref state) => print!("{}", state),
+				Token::Finalize(ref token) => print!("{}", token),
+				Token::None => print!("{}", " "),
 			}
 		}
 		println!("");
 	}
 }
-*/
 
-fn make_new_state() -> Vec<Vec<Option<usize>>> {
-	vec![vec![None; 2]; 256]
+fn make_new_state() -> Vec<Token> {
+	vec![Token::None; 256]
 }
 
 fn follow_exit_point(table: &Table, state: usize, index: usize) -> usize {
-	table[state][index][0].expect("No exit point defined")
+	match table[state][index] {
+		Token::Transist(state) => state,
+		_ => {
+			println!("No such transition exists");
+			exit(1);
+		},
+	}
 }
 
 fn create_and_follow_exit_point(table: &mut Table, state: usize, index: usize) -> usize {
 	let new_state = table.len();
 	table.push(make_new_state());
-	table[state][index][0] = Some(new_state);
+	table[state][index] = Token::Transist(new_state);
 	new_state
 }
 
 fn has_exit_point(table: &Table, state: usize, index: usize) -> bool {
-	table[state][index][0].is_some()
+	match table[state][index] {
+		Token::Transist(_) => true,
+		_ => false,
+	}
+}
+
+fn saturate(table: &mut Table, state: usize, token_name: &String) {
+	for transition in table[state].iter_mut() {
+		match *transition {
+			Token::Transist(_) => print!("{}", state),
+			Token::Finalize(_) => {
+				print!("Impossible finalization");
+				exit(1);
+			},
+			Token::None => *transition = Token::Finalize(token_name.clone()),
+		}
+	}
 }
 
 fn construct_transition_table(map: &Entries) -> Table {
-	let mut table = vec![vec![vec![None; 2]; 256]; 1];
+	let mut table = vec![make_new_state(); 1];
 	for (key, value) in map {
 		let mut state = 0 as usize;
 		for character in value.chars() {
 			let index = character as usize;
-			println!("{}", state);
 			if has_exit_point(&table, state, index) {
 				state = follow_exit_point(&table, state, index);
 			} else {
 				state = create_and_follow_exit_point(&mut table, state, index);
 			}
 		}
+		// Now we need to saturate this state with finishers
+		saturate(&mut table, state, &key);
 	}
 	table
 }
@@ -139,5 +165,5 @@ fn main() {
 	}
 	let map = get_entries_in_map(&file, &verbose);
 	let table = construct_transition_table(&map);
-	// print_transition_table(&table);
+	print_transition_table(&table);
 }
