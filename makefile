@@ -1,3 +1,3 @@
 all:
 	cargo build
-	./target/debug/program
+	./target/debug/program input

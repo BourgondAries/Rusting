@@ -1,10 +1,26 @@
 extern crate argparse;
 use argparse::{ArgumentParser, StoreTrue, Store};
-
 #[macro_use]
 extern crate log;
 extern crate env_logger;
 
+use std::fs::File;
+use std::vec::Vec;
+use std::process::exit;
+
+fn construct_table(filename: &String, verbose: &bool) -> Vec<Vec<i32>>  {
+	let mut result = File::open(filename);
+	let mut file: File;
+	match result {
+		Ok(stream) => file = stream,
+		Err(error) => {
+			error!("Could not open the file, aborting");
+			exit(1);
+		},
+	}
+	let mut table = vec![vec![1i32; 10]];
+	table
+}
 
 
 fn main() {
@@ -27,4 +43,5 @@ fn main() {
 			"increase verbosity");
 		argparser.parse_args_or_exit();
 	}
+	construct_table(&file, &verbose);
 }
