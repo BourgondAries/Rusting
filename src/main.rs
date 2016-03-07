@@ -5,20 +5,62 @@ extern crate log;
 extern crate env_logger;
 
 use std::fs::File;
+use std::io::BufReader;
+use std::io::BufRead;
 use std::vec::Vec;
 use std::process::exit;
+use std::collections::HashMap;
+use std::str::FromStr;
 
-fn construct_table(filename: &String, verbose: &bool) -> Vec<Vec<i32>>  {
-	let mut result = File::open(filename);
-	let mut file: File;
+type Table = Vec<Vec<Vec<i32>>>;
+
+fn break_line_into_name_and_regex(line: &String) -> (&str, &str) {
+	let mut counter = 0;
+	for character in line.chars() {
+		if character == ' ' {
+			break;
+		}
+		counter += 1;
+	}
+	let (first, second) = line.split_at(counter);
+	if second.len() > 0 {
+		let (_, fourth) = second.split_at(1);
+		(first, fourth.trim_right_matches('\n'))
+	}
+	else {
+		(first.trim_right_matches('\n'), "")
+	}
+}
+
+
+fn construct_table(filename: &String, verbose: &bool) -> Table {
+	if *verbose {
+		trace!("Running the table construction algorithm");
+	}
+	let result = File::open(filename);
+	let file: File;
 	match result {
 		Ok(stream) => file = stream,
-		Err(error) => {
+		Err(_) => {
 			error!("Could not open the file, aborting");
 			exit(1);
 		},
 	}
-	let mut table = vec![vec![1i32; 10]];
+	let mut line = String::new();
+	let mut map = HashMap::new();
+	let mut reader = BufReader::new(file);
+	while let Ok(size) = reader.read_line(&mut line) {
+		if size == 0 {
+			break;
+		}
+		{
+			let (left, right): (&str, &str) = break_line_into_name_and_regex(&line);
+			map.insert(String::from_str(left).ok().expect("Unable to parse"),
+				String::from_str(right).ok().expect("Unable to parse"));
+		}
+		line = String::new();
+	}
+	let mut table = vec![vec![vec![-1i32; 2]; 256]; 1];
 	table
 }
 
@@ -43,5 +85,5 @@ fn main() {
 			"increase verbosity");
 		argparser.parse_args_or_exit();
 	}
-	construct_table(&file, &verbose);
+	let table = construct_table(&file, &verbose);
 }
