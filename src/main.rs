@@ -12,7 +12,7 @@ use std::process::exit;
 use std::collections::HashMap;
 use std::str::FromStr;
 
-type Table = Vec<Vec<Vec<i32>>>;
+type Table = Vec<Vec<Vec<Option<usize>>>>;
 
 fn break_line_into_name_and_regex(line: &String) -> (&str, &str) {
 	let mut counter = 0;
@@ -32,8 +32,9 @@ fn break_line_into_name_and_regex(line: &String) -> (&str, &str) {
 	}
 }
 
+type Entries = HashMap<String, String>;
 
-fn construct_table(filename: &String, verbose: &bool) -> Table {
+fn get_entries_in_map(filename: &String, verbose: &bool) -> Entries {
 	if *verbose {
 		trace!("Running the table construction algorithm");
 	}
@@ -60,10 +61,61 @@ fn construct_table(filename: &String, verbose: &bool) -> Table {
 		}
 		line = String::new();
 	}
-	let mut table = vec![vec![vec![-1i32; 2]; 256]; 1];
-	table
+	map
 }
 
+/*
+fn print_transition_table(table: &Table) {
+	for i in table {
+		for j in i {
+			for k in j {
+				match k {
+					Some(state) => print!("{}", state),
+					None => print!("{}", " "),
+				}
+				print!("{}", k);
+			}
+		}
+		println!("");
+	}
+}
+*/
+
+fn make_new_state() -> Vec<Vec<Option<usize>>> {
+	vec![vec![None; 2]; 256]
+}
+
+fn follow_exit_point(table: &Table, state: usize, index: usize) -> usize {
+	table[state][index][0].expect("No exit point defined")
+}
+
+fn create_and_follow_exit_point(table: &mut Table, state: usize, index: usize) -> usize {
+	let new_state = table.len();
+	table.push(make_new_state());
+	table[state][index][0] = Some(new_state);
+	new_state
+}
+
+fn has_exit_point(table: &Table, state: usize, index: usize) -> bool {
+	table[state][index][0].is_some()
+}
+
+fn construct_transition_table(map: &Entries) -> Table {
+	let mut table = vec![vec![vec![None; 2]; 256]; 1];
+	for (key, value) in map {
+		let mut state = 0 as usize;
+		for character in value.chars() {
+			let index = character as usize;
+			println!("{}", state);
+			if has_exit_point(&table, state, index) {
+				state = follow_exit_point(&table, state, index);
+			} else {
+				state = create_and_follow_exit_point(&mut table, state, index);
+			}
+		}
+	}
+	table
+}
 
 fn main() {
 	let mut file = String::new();
@@ -85,5 +137,7 @@ fn main() {
 			"increase verbosity");
 		argparser.parse_args_or_exit();
 	}
-	let table = construct_table(&file, &verbose);
+	let map = get_entries_in_map(&file, &verbose);
+	let table = construct_transition_table(&map);
+	// print_transition_table(&table);
 }
