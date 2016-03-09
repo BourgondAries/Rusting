@@ -143,7 +143,15 @@ fn construct_transition_table(map: &Entries) -> Table {
 	table
 }
 
+macro_rules! checkit {
+	( $x:expr ) => { $x + 1 };
+}
+
 fn main() {
+	println!("Let's try it out? {}", checkit!(1 * 3));
+	if true {
+		exit(0);
+	}
 	let mut file = String::new();
 	let mut verbose = false;
 	{
