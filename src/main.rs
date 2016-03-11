@@ -11,6 +11,7 @@ use std::vec::Vec;
 use std::process::exit;
 use std::collections::HashMap;
 use std::str::FromStr;
+use std::thread;
 
 #[derive(Clone)]
 enum Token {
@@ -144,11 +145,77 @@ fn construct_transition_table(map: &Entries) -> Table {
 }
 
 macro_rules! checkit {
-	( $x:expr ) => { $x + 1 };
+	($x:expr) => { $x + 1 };
+}
+
+fn calc_vol()->f64{
+let a=(1.,2.,3.,0.);let p=355./113.;
+	match a {
+		(r,0.,0.,0.) => 4./3.*p*f64::powf(r,3.),
+		(r,h,0.,0.) => p*r.powf(2.)*h,
+		(l,w,h,0.) => l*w*h,
+		(a,b,c,h) => (((a+b+c)*(-a+b+c)*(a-b+c)*(a+b-c)).sqrt()/4.)*h/3.,
+	}
 }
 
 fn main() {
+	let mut alpha = 1;
+	let mut string = String::new();
+	loop {
+		alpha += 1;
+		println!("{}", alpha);
+		std::io::stdin().read_line(&mut string).expect("Could not read");
+	}
+	let mut counter = std::sync::Arc::new(std::sync::Mutex::new(0));
+	for i in 1..30 {
+		let cl = counter.clone();
+		std::thread::spawn(move || {
+			for i in 1..1000 {
+
+			}
+		});
+	}
+	let mut st = String::new();
+	std::io::stdin().read_line(&mut st).expect("Could not read");
+	let rc = std::rc::Rc::new(100);
+	let re = std::cell::RefCell::new(489);
+	let key = re.borrow_mut();
+	// *rc = 1030;
+	let bo = &Box::new(100);
+	println!("{}", calc_vol());
+	let a = (1, 2);
+	match a {
+		(1, b) => println!("Hey!"),
+		_ => {},
+	}
+	let alpha = &5i32;
+	println!("{}", *alpha);
+	let trade = Box::new((1, 2));
+	let x = (*trade).0;
+	println!("{}", x);
 	println!("Let's try it out? {}", checkit!(1 * 3));
+	let (tx, rx) = std::sync::mpsc::channel();
+	{
+		let tx = tx.clone();
+		let thread = thread::spawn(move || {
+				println!("Ayo holup");
+				let result = tx.send("Hello!");
+				match result {
+					Ok(_) => {},
+					Err(_) => println!("Hey, wwwerror!"),
+				}
+			});
+		let result = thread.join();
+		match result {
+			Ok(_) => {},
+			Err(_) => println!("Hey, werror!"),
+		}
+	}
+	let result = rx.recv();
+	match result {
+		Ok(result) => println!("We received: {}", result),
+		Err(_) => println!("Well,... we failed ;_;"),
+	}
 	if true {
 		exit(0);
 	}
