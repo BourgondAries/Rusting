@@ -158,10 +158,50 @@ let a=(1.,2.,3.,0.);let p=355./113.;
 	}
 }
 
+extern crate toml;
+use std::io::Read;
+use std::str;
+
 fn main() {
+	let mut vec: Vec<u8> = Vec::new();
+	let mut f = File::open("Cargo.toml").expect("Could not open");
+	match f.read_to_end(&mut vec) {
+		Ok(ln) => println!("Read {} bytes", ln),
+		Err(err) => {
+			println!("Fatal error {:?}", err);
+			exit(1);
+		},
+	}
+
+
+	let terr = &130i32;
+	let terr = &148i32;
+	{
+		let toml = str::from_utf8(vec.as_slice()).expect("could utf");
+		let value = toml::Parser::new(toml).parse().unwrap();
+		println!("{:?}", value);
+		if let toml::Value::Table(ref st) = value["test"] {
+			println!("It was a table: {:?}", st);
+		}
+	}
+	match terr {
+		&terr => println!("{:?}", terr),
+	}
+	match terr {
+		ref terr => println!("{:p}", terr),
+	}
+	if true {
+		return;
+	}
+	'outer: for i in 1..100 {
+		println!("{:?}", i);
+		loop {
+			continue 'outer;
+		}
+	}
 	let mut alpha = 1;
 	let mut string = String::new();
-	loop {
+	{
 		alpha += 1;
 		println!("{}", alpha);
 		std::io::stdin().read_line(&mut string).expect("Could not read");

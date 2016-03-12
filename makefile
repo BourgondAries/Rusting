@@ -1,3 +1,3 @@
 all:
-	cargo build
+	cargo build --verbose
 	./target/debug/program input
