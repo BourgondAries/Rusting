@@ -1,14 +1,17 @@
+
 extern crate argparse;
 use argparse::{ArgumentParser}; // , StoreTrue, Store};
 #[macro_use]
+extern crate log;
 extern crate env_logger;
 extern crate glfw;
-extern crate log;
+extern crate glium;
 extern crate rand;
 extern crate sfml;
 extern crate toml;
 
 use rand::Rng;
+use std::fmt::Debug;
 use std::process::exit;
 
 fn parse_arguments() {
@@ -91,6 +94,7 @@ use sfml::window::{ContextSettings, VideoMode, event, window_style};
 use sfml::graphics::{RenderWindow, RenderTarget, CircleShape, Color, Transformable, Shape};
 
 fn use_sfml() {
+	debug!("Initializing music stream");
 	let mut music = match Music::new_from_file("Tibetan throat singing.wav") {
 		Some(music) => music,
 		None => panic!("Could not load music!"),
@@ -116,9 +120,8 @@ fn use_sfml() {
 	while window.is_open() {
 		for event in window.events() {
 			match event {
-				event::KeyPressed { code: sfml::window::Key::W, ctrl: true,.. } |
-				event::LostFocus => window.close(),
-				event::Closed => window.close(),
+				event::KeyPressed { code: sfml::window::Key::W, ctrl: true,.. } | event::LostFocus | event::Closed
+					=> window.close(),
 				_ => {}
 			}
 		}
@@ -129,7 +132,24 @@ fn use_sfml() {
 	}
 }
 
+
+fn dynamic_dispatch() {
+	println!("{}", usize::max_value());
+	let val = 10;
+	let other = "Whoah dude";
+	let mut vector = Vec::new();
+	vector.push(&val as &Debug);
+	vector.push(&other as &Debug);
+	for i in vector {
+		println!("{:?}", i);
+	}
+}
+
 fn main() {
+	dynamic_dispatch();
+	if true {
+		return;
+	}
 	let log = log_stuff();
 	parse_arguments();
 	create_window();

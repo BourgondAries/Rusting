@@ -1,5 +1,5 @@
 [package]
-authors = ["Kevin R. Stravers"]
+authors = ["Boraris"]
 name = "program"
 version = "0.1.0"
 
@@ -8,6 +8,7 @@ version = "0.1.0"
 argparse = "0.2.1"
 env_logger = "0.3.2"
 glfw = "0.3.0"
+glium = "0.13.5"
 log = "0.3.5"
 rand = "0.3.14"
 sfml = "0.11.2"
