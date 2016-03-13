@@ -1,10 +1,10 @@
-
 extern crate argparse;
 use argparse::{ArgumentParser}; // , StoreTrue, Store};
 #[macro_use]
 extern crate log;
 extern crate env_logger;
 extern crate glfw;
+#[macro_use]
 extern crate glium;
 extern crate rand;
 extern crate sfml;
@@ -94,67 +94,64 @@ use sfml::window::{ContextSettings, VideoMode, event, window_style};
 use sfml::graphics::{RenderWindow, RenderTarget, CircleShape, Color, Transformable, Shape};
 
 fn use_sfml() {
+	use glium::{DisplayBuild, Surface, Vertex};
+	let display = glium::glutin::WindowBuilder::new().build_glium().unwrap();
+
+	let vertex_shader_src = r#"
+		#version 140
+		in vec2 position;
+		void main() {
+			gl_Position = vec4(position, 0.0, 1.0);
+		}
+	"#;
+	let fragment_shader_src = r#"
+		#version 140
+
+		out vec4 color;
+
+		void main() {
+			color = vec4(1.0, 0.0, 0.0, 1.0);
+		}
+	"#;
+
+	let program = glium::Program::from_source(&display, vertex_shader_src, fragment_shader_src, None).unwrap();
+
 	debug!("Initializing music stream");
 	let mut music = match Music::new_from_file("Tibetan throat singing.wav") {
 		Some(music) => music,
 		None => panic!("Could not load music!"),
 	};
+
+	implement_vertex!(Vertex, position);
 	music.play();
-	let mut window = match RenderWindow::new(VideoMode::new_init(
-		800, 600, 32), "SFML Example", window_style::CLOSE,
-		&ContextSettings::default()) {
-		Some(window) => window,
-		None => panic!("Can not create window"),
-	};
+	use glium::vertex::Vertex;
+	let vertex1 = Vertex { position: [-0.5, -0.5] };
+	let vertex2 = Vertex { position: [ 0.0,  0.5] };
+	let vertex3 = Vertex { position: [ 0.5, -0.25] };
+	let shape = vec![vertex1, vertex2, vertex3];
+	let vertex_buffer = glium::VertexBuffer::new(&display, &shape).unwrap();
+	let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
 
-	let mut circle = match CircleShape::new() {
-		Some(circle) => circle,
-		None => panic!("Can't create circle"),
-	};
-
-	circle.set_radius(30.);
-	circle.set_fill_color(&Color::red());
-	circle.set_position(&Vector2f::new(100., 100.));
-
-	window.set_framerate_limit(60);
-	while window.is_open() {
-		for event in window.events() {
+	loop {
+		let mut target = display.draw();
+		target.clear_color(0.0, 0.0, 1.0, 1.0);
+		target.draw(&vertex_buffer, &indices, &program, &glium::uniforms::EmptyUniforms,
+			&Default::default()).unwrap();
+		target.finish().unwrap();
+		for event in display.poll_events() {
 			match event {
-				event::KeyPressed { code: sfml::window::Key::W, ctrl: true,.. } | event::LostFocus | event::Closed
-					=> window.close(),
-				_ => {}
+				glium::glutin::Event::Closed => return,
+				_ => ()
 			}
 		}
-
-		window.clear(&Color::new_rgb(0, 200, 200));
-		window.draw(&circle);
-		window.display();
-	}
-}
-
-
-fn dynamic_dispatch() {
-	println!("{}", usize::max_value());
-	let val = 10;
-	let other = "Whoah dude";
-	let mut vector = Vec::new();
-	vector.push(&val as &Debug);
-	vector.push(&other as &Debug);
-	for i in vector {
-		println!("{:?}", i);
 	}
 }
 
 fn main() {
-	dynamic_dispatch();
-	if true {
-		return;
-	}
 	let log = log_stuff();
 	parse_arguments();
-	create_window();
+	// create_window();
 	use_sfml();
 	create_random_numbers();
 	parse_toml();
-	println!("Ultimate Crime");
 }
