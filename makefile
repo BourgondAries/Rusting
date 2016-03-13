@@ -1,3 +1,6 @@
+begin:
+	${MAKE} -s all
+
 all:
-	cargo build --verbose
-	./target/debug/program input
+	cargo build
+	./target/debug/program
