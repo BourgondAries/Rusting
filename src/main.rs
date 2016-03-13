@@ -85,11 +85,17 @@ fn create_window() {
 		}
 }
 
+use sfml::audio::Music;
 use sfml::system::Vector2f;
 use sfml::window::{ContextSettings, VideoMode, event, window_style};
 use sfml::graphics::{RenderWindow, RenderTarget, CircleShape, Color, Transformable, Shape};
 
 fn use_sfml() {
+	let mut music = match Music::new_from_file("Tibetan throat singing.wav") {
+		Some(music) => music,
+		None => panic!("Could not load music!"),
+	};
+	music.play();
 	let mut window = match RenderWindow::new(VideoMode::new_init(
 		800, 600, 32), "SFML Example", window_style::CLOSE,
 		&ContextSettings::default()) {
@@ -110,6 +116,8 @@ fn use_sfml() {
 	while window.is_open() {
 		for event in window.events() {
 			match event {
+				event::KeyPressed { code: sfml::window::Key::W, ctrl: true,.. } |
+				event::LostFocus => window.close(),
 				event::Closed => window.close(),
 				_ => {}
 			}
