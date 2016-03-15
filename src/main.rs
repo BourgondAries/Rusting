@@ -1,8 +1,51 @@
-#[macro_use]
-extern crate glium;
+#[macro_use] extern crate glium;
+
+fn load_vertex_shader(string: &mut String) -> std::io::Result<usize> {
+	use std::fs::File;
+	use std::io::Read;
+	let mut file = try!(File::open("vertex_shader.glsl"));
+	file.read_to_string(string)
+}
+
+trait Cool {
+	fn rere(&self);
+}
+
+impl Cool for i32 {
+	fn rere(&self) {
+		println!("HEYYY!");
+	}
+}
+
+fn getty(alpha: &i32) {
+	println!("{}", alpha);
+}
 
 fn main() {
 	use glium::{DisplayBuild, Surface};
+	use std::collections::HashMap;
+	use std::thread;
+	use std::thread::Thread;
+	let mut map: HashMap<String, String> = HashMap::new();
+	let a = std::rc::Rc::new(10);
+	getty(&*a);
+	for i in 1..100 {
+		map.insert(i.to_string(),
+			"allright".to_string());
+	}
+	let mut veccy = Vec::new();
+	for key in map.keys() {
+		let temp = key.clone();
+		veccy.push(thread::spawn(move || {
+			let x = temp;
+			println!("EHHH {}", x);
+		}));
+	}
+	for i in veccy {
+		i.join();
+	}
+	return;
+	100i32.rere();
 	let display = glium::glutin::WindowBuilder::new().build_glium().unwrap();
 
 	#[derive(Copy, Clone)]
@@ -32,6 +75,12 @@ fn main() {
 		}
 	"#;
 
+	let vertex_shader_src = {
+		let mut temporary = String::new();
+		load_vertex_shader(&mut temporary);
+		temporary
+	};
+
 	let fragment_shader_src = r#"
 		#version 140
 		out vec4 color;
@@ -41,7 +90,7 @@ fn main() {
 		}
 	"#;
 
-	let program = glium::Program::from_source(&display, vertex_shader_src, fragment_shader_src, None).unwrap();
+	let program = glium::Program::from_source(&display, &vertex_shader_src[..], fragment_shader_src, None).unwrap();
 
 	let mut t: f32 = 0.5;
 	loop {
