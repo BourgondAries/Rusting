@@ -21,11 +21,25 @@ fn getty(alpha: &i32) {
 	println!("{}", alpha);
 }
 
+fn try() {
+	let mut x = vec![1, 2, 3];
+	let y: &mut [i32] = &mut x[..];
+	for i in y.iter_mut() {
+		println!("{}", i);
+		*i += 1;
+	}
+	for i in y {
+		println!("{}", i);
+	}
+}
+
 fn main() {
 	use glium::{DisplayBuild, Surface};
 	use std::collections::HashMap;
 	use std::thread;
 	use std::thread::Thread;
+	try();
+	return;
 	let mut map: HashMap<String, String> = HashMap::new();
 	let a = std::rc::Rc::new(10);
 	getty(&*a);
