@@ -132,7 +132,15 @@ fn handle(request: &mut Request) -> IronResult<Response> {
 	Ok(Response::with((status::Ok, "Hello World!")))
 }
 
+fn axxa(mut ax: &mut String) {
+	match ax {
+		ref st => {}
+	}
+	let ref mut a = ax;
+}
+
 fn main() {
+	axxa(&mut "Hello!".to_string());
 	match Iron::new(handle).http("localhost:3000") {
 		Ok(listening) => println!("Listening: {:?}", listening),
 		Err(error) => println!("Error, could not start the server: {:?}", error),
