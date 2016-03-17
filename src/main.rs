@@ -1,4 +1,5 @@
 #[macro_use] extern crate glium;
+extern crate rand;
 
 fn load_vertex_shader(string: &mut String) -> std::io::Result<usize> {
 	use std::fs::File;
@@ -21,23 +22,131 @@ fn getty(alpha: &i32) {
 	println!("{}", alpha);
 }
 
+struct Fib {
+	prev: u64,
+	next: u64,
+}
+
+impl Fib {
+	fn new() -> Fib {
+		Fib { prev: 0, next: 1 }
+	}
+}
+
+fn does_add_overflow(a: u64, b: u64) -> bool {
+	u64::max_value() - a <= b
+}
+
+impl Iterator for Fib {
+	type Item = u64;
+	fn next(&mut self) -> Option<u64> {
+		let (ret, _) = self.prev.overflowing_add(self.next);
+		self.prev = self.next;
+		self.next = ret;
+		Some(ret)
+	}
+}
+
 fn try() {
 	let mut x = vec![1, 2, 3];
-	let y: &mut [i32] = &mut x[..];
-	for i in y.iter_mut() {
+	// let y: &mut [i32] = &mut x[..];
+	for i in &mut x {
 		println!("{}", i);
 		*i += 1;
 	}
-	for i in y {
+	for i in &mut x {
 		println!("{}", i);
 	}
 }
 
+macro_rules! gen {
+	[$e:expr => $variable:ident in $iterable:expr] => (
+		$iterable.iter().cloned().map(|$variable| $e).collect()
+	);
+	[$e:expr => $variable:ident in $iterable:expr, $condition:expr] => (
+		$iterable.iter().cloned().filter(|$variable| $condition).map(|$variable| $e).collect()
+	);
+}
+
+macro_rules! lexp {
+	[$e:expr => $name:ident in $iterable:expr] => (
+		$iterable.iter().cloned().map(|$name| $e).collect()
+	);
+}
+
+extern crate byteorder;
+
+fn oker() {
+	use std::collections::{BTreeSet, HashSet};
+	use byteorder::{LittleEndian, WriteBytesExt};
+
+	let mut wtr = vec![1u8, 2u8];
+	(&mut wtr[0..1]).write_u16::<LittleEndian>(517).unwrap();
+	wtr.write_u16::<LittleEndian>(768).unwrap();
+
+	return;
+	let all = [1, 2, 3, 4, 5, 6, 7, 8];
+	let bell = &all[..3];
+	println!("{:?}", bell);
+	let x: Vec<i32> = gen!(i*30 => i in vec!(10; 50));
+	println!("{:?}", x);
+	return;
+	let fib = Fib::new();
+	let (mut value, mut iters) = (0u64, 0u64);
+	let mut vals = 0f64;
+	let amount = 1_000_000f64;
+	for i in fib {
+		vals += (i as f64) / amount;
+		if iters > 1_000_000u64 {
+			break;
+		}
+	}
+	println!("The avg was: {}", vals);
+	vals = 0.0;
+	for i in 0..(amount as u64) {
+		vals += (rand::random::<u64>() as f64) / amount;
+	}
+	println!("The avg was: {}", vals);
+}
+
+fn get_some_more() -> i32 {
+	let x = std::vec::Vec::<i32>::new();
+	-match 10 {
+		value => value,
+	}
+	-3
+}
+
+fn get_some() -> i32 {
+	10
+	-3
+}
+
+extern crate iron;
+
+use iron::prelude::*;
+use iron::status;
+
+fn handle(request: &mut Request) -> IronResult<Response> {
+	println!("{:?}", request);
+	Ok(Response::with((status::Ok, "Hello World!")))
+}
+
 fn main() {
+	match Iron::new(handle).http("localhost:3000") {
+		Ok(listening) => println!("Listening: {:?}", listening),
+		Err(error) => println!("Error, could not start the server: {:?}", error),
+	}
+}
+
+fn gain() {
 	use glium::{DisplayBuild, Surface};
 	use std::collections::HashMap;
 	use std::thread;
 	use std::thread::Thread;
+	let x = 100i32;
+	println!("{:?}", 1483722338i32.checked_add(1302337247));
+	oker();
 	try();
 	return;
 	let mut map: HashMap<String, String> = HashMap::new();
