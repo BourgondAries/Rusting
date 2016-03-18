@@ -74,6 +74,7 @@ macro_rules! lexp {
 	);
 }
 
+
 extern crate byteorder;
 
 fn oker() {
@@ -139,8 +140,44 @@ fn axxa(mut ax: &mut String) {
 	let ref mut a = ax;
 }
 
+struct Alpha<'a> {
+	name: &'a str,
+}
+
+#[derive(Clone, Copy, Debug)]
+struct A {
+	b: i32,
+}
+
+extern crate colored;
+
 fn main() {
-	axxa(&mut "Hello!".to_string());
+	use colored::*;
+	println!("{}", "A".red());
+	{
+		let x = vec![1, 2, 3];
+		let mut y = x.clone();
+		y.push(100);
+		println!("{:?}", x);
+		println!("{:?}", y);
+		let c = A { b: 100 };
+		let d = c;
+		println!("{:?}", c);
+		let a = String::new();
+		if a == "derp" {
+			println!("{}", a);
+		}
+		println!("{}", a);
+	}
+	return;
+	let local = "string";
+	let alpha = Alpha { name: local };
+	return;
+	let something: Vec<i32> = gen!(i*10 => i in [1, 2, 3]);
+	println!("{:?}", something);
+	// axxa(&mut "Hello!".to_string());
+	let x = String::new();
+	let y = x;
 	match Iron::new(handle).http("localhost:3000") {
 		Ok(listening) => println!("Listening: {:?}", listening),
 		Err(error) => println!("Error, could not start the server: {:?}", error),
@@ -167,7 +204,7 @@ fn gain() {
 	let mut veccy = Vec::new();
 	for key in map.keys() {
 		let temp = key.clone();
-		veccy.push(thread::spawn(move || {
+		veccy.push(thread::spawn(|| {
 			let x = temp;
 			println!("EHHH {}", x);
 		}));
