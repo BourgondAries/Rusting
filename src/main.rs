@@ -151,8 +151,38 @@ struct A {
 
 extern crate colored;
 
+#[derive(Debug)]
+struct GraphicsState;
+
+
+fn guitest() {
+	use std::thread;
+	use std::sync::mpsc::channel;
+	let (tx, rx) = channel::<String>();
+	thread::spawn(
+		|| {
+			loop {
+				let string = {
+					let mut temp = String::new();
+					match std::io::stdin().read_line(&mut temp) {
+						Ok(_) => temp,
+						Err(_) => break,
+					}
+				};
+				println!("{}", string);
+			}
+		}
+	);
+	loop {
+		println!("{}", rx.recv().unwrap());
+	}
+
+}
+
 fn main() {
 	use colored::*;
+	guitest();
+	return;
 	println!("{}", "A".red());
 	{
 		let x = vec![1, 2, 3];
