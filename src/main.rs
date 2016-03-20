@@ -1,4 +1,5 @@
 #[macro_use] extern crate glium;
+extern crate toml;
 extern crate rand;
 
 fn load_vertex_shader(string: &mut String) -> std::io::Result<usize> {
@@ -156,27 +157,13 @@ struct GraphicsState;
 
 
 fn guitest() {
-	use std::thread;
-	use std::sync::mpsc::channel;
-	let (tx, rx) = channel::<String>();
-	thread::spawn(
-		|| {
-			loop {
-				let string = {
-					let mut temp = String::new();
-					match std::io::stdin().read_line(&mut temp) {
-						Ok(_) => temp,
-						Err(_) => break,
-					}
-				};
-				println!("{}", string);
-			}
+	let mut x = 10;
+	match &mut x {
+		v => {
+			println!("{}", v);
+			*v = 10;
 		}
-	);
-	loop {
-		println!("{}", rx.recv().unwrap());
 	}
-
 }
 
 fn main() {
