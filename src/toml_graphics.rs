@@ -3,11 +3,11 @@ extern crate toml;
 use glium::backend::Facade;
 use glium::{IndexBuffer, VertexBuffer};
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct Vertex {
 	position: [f32; 3],
 }
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct Normal {
 	normal: [f32; 3],
 }
@@ -68,7 +68,6 @@ fn create_normal_buffer<F>(display: &F, table: &toml::Table) -> VertexBuffer<Nor
 		vector.push(Normal { normal: [one, two, three] });
 	}
 	VertexBuffer::new(display, &vector).unwrap()
-
 }
 
 fn create_face_buffer<F>(display: &F, table: &toml::Table) -> IndexBuffer<u32> where F: Facade {
@@ -86,13 +85,23 @@ fn create_face_buffer<F>(display: &F, table: &toml::Table) -> IndexBuffer<u32> w
 		_ => panic!("No list"),
 	};
 	let mut vector = Vec::new();
-	for float in toml.chunks(1) {
-		let one;
+	for float in toml.chunks(3) {
+		let (one, two, three);
 		match float[0] {
 			Value::Integer(value) => one = value as u32,
 			_ => panic!("Flerror"),
 		}
+		match float[1] {
+			Value::Integer(value) => two = value as u32,
+			_ => panic!("Flerror"),
+		}
+		match float[2] {
+			Value::Integer(value) => three = value as u32,
+			_ => panic!("Flerror"),
+		}
 		vector.push(one);
+		vector.push(two);
+		vector.push(three);
 	}
 	IndexBuffer::new(display, glium::index::PrimitiveType::TrianglesList, &vector).unwrap()
 }
