@@ -2,9 +2,13 @@
 #[macro_use]
 extern crate glium;
 
+extern crate cgmath;
+
 extern crate toml;
 mod load_program;
 mod toml_graphics;
+
+use cgmath::{Matrix4, Matrix3, Point3, Vector3, Rotation3, Basis3};
 
 fn main() {
 	use glium::{DisplayBuild, Surface};
@@ -29,19 +33,21 @@ fn main() {
 		let mut target = display.draw();
 		target.clear_color_and_depth((0.0, 0.0, 1.0, 1.0), 1.0);
 
-		let model = load_program::Mat4 {
-			matrix: [
-				[0.01, 0.0, 0.0, 0.0],
-				[0.0, 0.01, 0.0, 0.0],
-				[0.0, 0.0, 0.01, 0.0],
-				[0.0, 0.0, 0.0, 1.0f32]
-			]
-		};
+		let scale = Matrix4::from_scale(0.01f32);
+		let look = Matrix4::look_at(
+			// &[t*100.0, 100.0, 0.0f32], &[-t*100.0, -100.0, 1.0f32], &[0.0, 1.0, 0.0f32]
+			Point3::new(1.0, 0.0, 0.0f32),
+			Point3::new(0.0, 0.0, 0.0f32),
+			Vector3::new(0.0, 1.0, 0.0f32));
+		let rot: Basis3<f32> = Basis3::from_axis_angle(
+			Vector3::new(0.0, 1.0, 0.0f32),
+			cgmath::Rad {s: t*2.0}
+		);
+		let tt = rot.as_ref();
+		let rott: Matrix4<f32> = Matrix4::from(*tt);
+		let complete = look * rott * scale;
 
-		let x = load_program::view_matrix(&[t*100.0, 100.0, 0.0f32], &[-t*100.0, -100.0, 1.0f32], &[0.0, 1.0, 0.0f32]);
-		let model = x * model;
-		println!("{:?}", model);
-
+		let finished: [[f32; 4]; 4] = complete.into();
 		let light = [-1.0, 0.4, 0.9f32];
 
 		let params = glium::DrawParameters {
@@ -54,7 +60,7 @@ fn main() {
 		};
 
 		target.draw((&positions, &normals), &indices, &program,
-			&uniform! { matrix: model.matrix, u_light: light }, &params).unwrap();
+			&uniform! { matrix: finished, u_light: light }, &params).unwrap();
 		target.finish().unwrap();
 
 		for ev in display.poll_events() {
