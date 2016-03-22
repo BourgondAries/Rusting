@@ -22,7 +22,7 @@ fn main() {
 
 	let mut t = 0.0;
 	loop {
-		t += 0.1;
+		t += 0.001;
 		if t > std::f32::consts::PI {
 			t = 0.0;
 		}
@@ -38,9 +38,9 @@ fn main() {
 			]
 		};
 
-		let x = load_program::view_matrix(&[1.0, 7.0, 0.0f32], &[0.0, 0.0, 1.0f32], &[1.0, 1.0, 0.0f32]);
+		let x = load_program::view_matrix(&[t*100.0, 100.0, 0.0f32], &[-t*100.0, -100.0, 1.0f32], &[0.0, 1.0, 0.0f32]);
 		let model = x * model;
-		println!("{:?}", &model);
+		println!("{:?}", model);
 
 		let light = [-1.0, 0.4, 0.9f32];
 
