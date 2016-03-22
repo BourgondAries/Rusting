@@ -3,7 +3,6 @@
 extern crate glium;
 
 extern crate toml;
-mod teapot;
 mod load_program;
 mod toml_graphics;
 
@@ -30,12 +29,18 @@ fn main() {
 		let mut target = display.draw();
 		target.clear_color_and_depth((0.0, 0.0, 1.0, 1.0), 1.0);
 
-		let matrix = [
-			[0.01, 0.0, 0.0, 0.0],
-			[0.0, 0.01, 0.0, 0.0],
-			[0.0, 0.0, 0.01, 0.0],
-			[0.0, 0.0, 0.0, 1.0f32]
-		];
+		let model = load_program::Mat4 {
+			matrix: [
+				[0.01, 0.0, 0.0, 0.0],
+				[0.0, 0.01, 0.0, 0.0],
+				[0.0, 0.0, 0.01, 0.0],
+				[0.0, 0.0, 0.0, 1.0f32]
+			]
+		};
+
+		let x = load_program::view_matrix(&[1.0, 7.0, 0.0f32], &[0.0, 0.0, 1.0f32], &[1.0, 1.0, 0.0f32]);
+		let model = x * model;
+		println!("{:?}", &model);
 
 		let light = [-1.0, 0.4, 0.9f32];
 
@@ -49,7 +54,7 @@ fn main() {
 		};
 
 		target.draw((&positions, &normals), &indices, &program,
-					&uniform! { matrix: matrix, u_light: light }, &params).unwrap();
+			&uniform! { matrix: model.matrix, u_light: light }, &params).unwrap();
 		target.finish().unwrap();
 
 		for ev in display.poll_events() {
