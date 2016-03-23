@@ -29,6 +29,8 @@ fn main() {
 		}
 	}
 
+	let mut fadeboundary = FadeBoundary::new();
+
 	let mut view = window.get_view();
 	let mut count = 0;
 
@@ -53,14 +55,18 @@ fn main() {
 			}
 		}
 
-		balls.simulate(size);
-		if balls.0[0].is_out_of_bounds(size) {
-			count += 1;
-			println!("HIT {}", count);
+		let bounds = balls.get_bounds_hit(size);
+		if bounds.interesting() {
+			println!("{:?}", bounds);
 		}
+		fadeboundary.collide(bounds.left);
+
+		balls.simulate(size);
+		fadeboundary.simulate();
 
 		window.clear(&Color::new_rgb(0, 0, 0));
 		window.draw(&balls);
+		window.draw(&fadeboundary);
 		window.display()
 	}
 }
@@ -109,12 +115,24 @@ fn correct(shape: &mut sfml::graphics::CircleShape, size: Size, mut speed: Speed
 	speed
 }
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 struct OutBounds {
 	left: u32,
 	right: u32,
 	top: u32,
 	bottom: u32,
+}
+
+impl Add for OutBounds {
+	type Output = OutBounds;
+	fn add(self, rhs: OutBounds) -> OutBounds {
+		OutBounds {
+			left: self.left + rhs.left,
+			right: self.right + rhs.right,
+			top: self.top + rhs.top,
+			bottom: self.bottom + rhs.bottom,
+		}
+	}
 }
 
 impl<'a> Ball<'a> {
@@ -214,7 +232,12 @@ impl<'a> Balls<'a> {
 	}
 
 	fn get_bounds_hit(&self, size: Size) -> OutBounds {
-		OutBounds::default()
+		let mut accumulator = OutBounds::default();
+		for ball in &self.0 {
+			let bounds = ball.where_out_of_bounds(size);
+			accumulator = bounds + accumulator;
+		}
+		accumulator
 	}
 }
 
@@ -226,5 +249,88 @@ impl<'s> sfml::graphics::Drawable for Balls<'s> {
 				None => {}
 			}
 		}
+	}
+}
+
+struct FadeBoundaries<'a>(Vec<FadeBoundary<'a>>);
+
+impl<'a> FadeBoundaries<'a> {
+	fn new() -> FadeBoundaries<'a> {
+		let mut container: Vec<FadeBoundary<'a>> = vec![];
+		let mut fade1 = FadeBoundary::new();
+		fade1.set_size(800.0, 10.0);
+		container.push(fade1);
+		FadeBoundaries(container)
+	}
+}
+
+
+struct FadeBoundary<'a>(Option<sfml::graphics::RectangleShape<'a>>, f32);
+
+impl<'a> FadeBoundary<'a> {
+	fn new() -> FadeBoundary<'a> {
+		let mut rect = sfml::graphics::RectangleShape::new();
+		if let Some(ref mut shape) = rect {
+			use sfml::graphics::Transformable;
+			use sfml::graphics::Shape;
+			shape.set_size2f(10.0, 600.0);
+			shape.set_fill_color(&sfml::graphics::Color::new_rgba(255, 0, 0, 0));
+		}
+		FadeBoundary(rect, 0.0)
+	}
+
+	fn set_position(&mut self, x: f32, y: f32) {
+		if let Some(ref mut shape) = self.0 {
+			use sfml::graphics::Transformable;
+			shape.set_position2f(x, y);
+		}
+	}
+
+	fn set_size(&mut self, x: f32, y: f32) {
+		if let Some(ref mut shape) = self.0 {
+			use sfml::graphics::Transformable;
+			shape.set_size2f(x, y);
+		}
+	}
+
+	fn set_color(&mut self) {
+		if let Some(ref mut shape) = self.0 {
+			use sfml::graphics::Transformable;
+			use sfml::graphics::Shape;
+			shape.set_fill_color(&sfml::graphics::Color::new_rgba(255, 0, 0, self.1 as u8));
+		}
+	}
+
+	fn collide(&mut self, times: u32) {
+		self.1 += times as f32 * 100.0;
+		if self.1 > 255.0 {
+			self.1 = 255.0;
+		}
+		self.set_color();
+	}
+
+	fn simulate(&mut self) {
+		if self.1 > 0.0 {
+			self.1 -= 0.1;
+		}
+		self.set_color();
+	}
+}
+
+impl<'s> sfml::graphics::Drawable for FadeBoundary<'s> {
+	fn draw<RT: sfml::graphics::RenderTarget>(&self, target: &mut RT, _: &mut sfml::graphics::RenderStates) {
+		match self.0 {
+			Some(ref value) => target.draw(value),
+			None => {}
+		}
+	}
+}
+
+impl OutBounds {
+	fn interesting(&self) -> bool {
+		self.left > 0
+		|| self.top > 0
+		|| self.right > 0
+		|| self.bottom > 0
 	}
 }
