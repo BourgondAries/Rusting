@@ -19,8 +19,11 @@ fn main() {
 	};
 
 	let mut balls = Balls::new();
-	let mut fadeboundaries = FadeBoundaries::new();
+	let mut fadeboundaries = FadeBoundaries::new(size);
 	let mut view = window.get_view();
+	let font = sfml::graphics::Font::new_from_file("CelestiaMediumRedux1.55.ttf").expect("Could not load font file");
+	let message = String::from("Particles: ");
+	let mut pressure = Pressure::new(&font, &message);
 
 	while window.is_open() {
 		for event in window.events() { {
@@ -45,16 +48,61 @@ fn main() {
 			}
 		}
 
+		let ball_count = balls.len();
+
 		let bounds = balls.get_bounds_hit(size);
 		fadeboundaries.collide(bounds);
 
 		balls.simulate(size);
 		fadeboundaries.simulate();
+		pressure.simulate(ball_count);
 
 		window.clear(&Color::new_rgb(0, 0, 0));
 		window.draw(&balls);
 		window.draw(&fadeboundaries);
+		window.draw(&pressure);
 		window.display()
+	}
+}
+
+struct Pressure<'a> {
+	text: Option<sfml::graphics::Text<'a>>,
+	font: &'a sfml::graphics::Font,
+	script: &'a String,
+}
+
+impl<'a> Pressure<'a> {
+	fn new(font: &'a sfml::graphics::Font, script: &'a String) -> Pressure<'a> {
+		let mut text = sfml::graphics::Text::new();
+		if let Some(ref mut text) = text {
+			text.set_font(font);
+		}
+		Pressure {
+			text: text,
+			font: font,
+			script: script
+		}
+	}
+
+	fn set_position(&mut self, x: f32, y: f32) {
+		if let Some(ref mut text) = self.text {
+			use sfml::graphics::Transformable;
+			text.set_position2f(x, y);
+		}
+	}
+
+	fn simulate(&mut self, balls: usize) {
+		if let Some(ref mut text) = self.text {
+			text.set_string(format!("{}{}", self.script, balls).as_str());
+		}
+	}
+}
+
+impl<'a> sfml::graphics::Drawable for Pressure<'a> {
+	fn draw<RT: sfml::graphics::RenderTarget>(&self, target: &mut RT, _: &mut sfml::graphics::RenderStates) {
+		if let Some(ref text) = self.text {
+			target.draw(text);
+		}
 	}
 }
 
@@ -205,6 +253,10 @@ impl<'a> Balls<'a> {
 		Balls(vec![], rand::thread_rng())
 	}
 
+	fn len(&self) -> usize {
+		self.0.len()
+	}
+
 	fn new_random(&mut self) {
 		use rand::distributions::{IndependentSample, Range};
 		let range = Range::new(0.01, 0.20);
@@ -257,7 +309,7 @@ impl<'s> sfml::graphics::Drawable for Balls<'s> {
 struct FadeBoundaries<'a>(Vec<FadeBoundary<'a>>);
 
 impl<'a> FadeBoundaries<'a> {
-	fn new() -> FadeBoundaries<'a> {
+	fn new(size: Size) -> FadeBoundaries<'a> {
 		let mut container: Vec<FadeBoundary<'a>> = vec![];
 		macro_rules! create {
 			($w:expr, $h:expr) => ( {
@@ -274,10 +326,12 @@ impl<'a> FadeBoundaries<'a> {
 				}
 			);
 		}
-		create!(800.0, 10.0);
-		create!(10.0, 600.0);
-		create!(800.0, 10.0, 0.0, 590.0);
-		create!(10.0, 600.0, 790.0, 0.0);
+		let (x, y) = (size.0 as f32, size.1 as f32);
+		let (w, h) = (10.0, 10.0);
+		create!(x, h);
+		create!(w, y);
+		create!(w, y, x - w, 0.0);
+		create!(x, h, 0.0, y - h);
 		FadeBoundaries(container)
 	}
 
