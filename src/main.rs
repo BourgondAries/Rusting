@@ -8,7 +8,6 @@ fn main() {
 	use sfml::graphics::{RenderWindow, RenderTarget, Color, Transformable};
 
 	let size = Size(800, 600);
-	let mut rng = rand::thread_rng();
 
 	let mut window = match RenderWindow::new(VideoMode::new_init(size.0, size.1, 32),
 		"Gas Pressure",
@@ -20,19 +19,8 @@ fn main() {
 	};
 
 	let mut balls = Balls::new();
-	{
-		use rand::distributions::{IndependentSample, Range};
-		let range = Range::new(0.01, 0.20);
-		for _ in 0..10 {
-			let speed = Speed(range.ind_sample(&mut rng), range.ind_sample(&mut rng));
-			balls.add_ball(speed);
-		}
-	}
-
-	let mut fadeboundary = FadeBoundary::new();
-
+	let mut fadeboundaries = FadeBoundaries::new();
 	let mut view = window.get_view();
-	let mut count = 0;
 
 	while window.is_open() {
 		for event in window.events() { {
@@ -50,23 +38,22 @@ fn main() {
 					KeyPressed { code: Key::Right, ..} => { sv!(1.0, 0.0); }
 					KeyPressed { code: Key::Equal, ..} => { sv!(0.9); }
 					KeyPressed { code: Key::Dash, ..} => { sv!(1.1); }
+					KeyPressed { code: Key::Return, ..} => balls.new_random(),
+					KeyPressed { code: Key::BackSpace, ..} => balls.remove_front(),
 					_ => {}
 				}
 			}
 		}
 
 		let bounds = balls.get_bounds_hit(size);
-		if bounds.interesting() {
-			println!("{:?}", bounds);
-		}
-		fadeboundary.collide(bounds.left);
+		fadeboundaries.collide(bounds);
 
 		balls.simulate(size);
-		fadeboundary.simulate();
+		fadeboundaries.simulate();
 
 		window.clear(&Color::new_rgb(0, 0, 0));
 		window.draw(&balls);
-		window.draw(&fadeboundary);
+		window.draw(&fadeboundaries);
 		window.display()
 	}
 }
@@ -211,11 +198,26 @@ impl<'s> sfml::graphics::Drawable for Ball<'s> {
 	}
 }
 
-struct Balls<'a>(Vec<Ball<'a>>);
+struct Balls<'a>(Vec<Ball<'a>>, rand::ThreadRng);
 
 impl<'a> Balls<'a> {
 	fn new() -> Balls<'a> {
-		Balls(vec![])
+		Balls(vec![], rand::thread_rng())
+	}
+
+	fn new_random(&mut self) {
+		use rand::distributions::{IndependentSample, Range};
+		let range = Range::new(0.01, 0.20);
+		for _ in 0..3 {
+			let speed = Speed(range.ind_sample(&mut self.1), range.ind_sample(&mut self.1));
+			self.add_ball(speed);
+		}
+	}
+
+	fn remove_front(&mut self) {
+		if self.0.is_empty() == false {
+			self.0.remove(0);
+		}
 	}
 
 	fn add_ball(&mut self, speed: Speed) {
@@ -257,13 +259,49 @@ struct FadeBoundaries<'a>(Vec<FadeBoundary<'a>>);
 impl<'a> FadeBoundaries<'a> {
 	fn new() -> FadeBoundaries<'a> {
 		let mut container: Vec<FadeBoundary<'a>> = vec![];
-		let mut fade1 = FadeBoundary::new();
-		fade1.set_size(800.0, 10.0);
-		container.push(fade1);
+		macro_rules! create {
+			($w:expr, $h:expr) => ( {
+					let mut fade = FadeBoundary::new();
+					fade.set_size($w, $h);
+					container.push(fade)
+				}
+			);
+			($w:expr, $h:expr, $l:expr, $r:expr) => ( {
+					let mut fade = FadeBoundary::new();
+					fade.set_size($w, $h);
+					fade.set_position($l, $r);
+					container.push(fade)
+				}
+			);
+		}
+		create!(800.0, 10.0);
+		create!(10.0, 600.0);
+		create!(800.0, 10.0, 0.0, 590.0);
+		create!(10.0, 600.0, 790.0, 0.0);
 		FadeBoundaries(container)
+	}
+
+	fn collide(&mut self, hit: OutBounds) {
+		self.0[0].collide(hit.top);
+		self.0[1].collide(hit.left);
+		self.0[2].collide(hit.right);
+		self.0[3].collide(hit.bottom);
+	}
+
+	fn simulate(&mut self) {
+		for border in &mut self.0 {
+			border.simulate();
+		}
 	}
 }
 
+impl<'a> sfml::graphics::Drawable for FadeBoundaries<'a> {
+	fn draw<RT: sfml::graphics::RenderTarget>(&self, target: &mut RT, _: &mut sfml::graphics::RenderStates) {
+		for border in &self.0 {
+			target.draw(border);
+		}
+	}
+}
 
 struct FadeBoundary<'a>(Option<sfml::graphics::RectangleShape<'a>>, f32);
 
