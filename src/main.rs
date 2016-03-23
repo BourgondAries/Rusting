@@ -22,15 +22,15 @@ fn main() {
 	let mut fadeboundaries = FadeBoundaries::new(size);
 	let mut view = window.get_view();
 	let font = sfml::graphics::Font::new_from_file("CelestiaMediumRedux1.55.ttf").expect("Could not load font file");
-	let message = String::from("Particles: ");
+	let message = "Particles: ";
 	let mut pressure = {
-		let mut pressure = Pressure::new(&font, &message);
+		let mut pressure = Pressure::new(&font, message);
 		pressure.set_position_from_corner(10.0, 10.0);
 		pressure
 	};
-	let message = String::from("Press Enter to spawn\nBackspace to remove\nArrows for movement\n=/- for zoom");
+	let message = "Press Enter to spawn\nBackspace to remove\nArrows for movement\n=/- for zoom";
 	let start_text_value = {
-		let mut text = Pressure::new(&font, &message);
+		let mut text = Pressure::new(&font, message);
 		text.neutralize();
 		text.set_position(size.0 as f32 / 2.0, size.1 as f32 / 2.0);
 		text
@@ -106,11 +106,11 @@ impl<'a, T> sfml::graphics::Drawable for ConditionalDraw<'a, T> where T: 'a + sf
 
 struct Pressure<'a> {
 	text: Option<sfml::graphics::Text<'a>>,
-	script: &'a String,
+	script: &'a str,
 }
 
 impl<'a> Pressure<'a> {
-	fn new(font: &'a sfml::graphics::Font, script: &'a String) -> Pressure<'a> {
+	fn new(font: &'a sfml::graphics::Font, script: &'a str) -> Pressure<'a> {
 		let mut text = sfml::graphics::Text::new();
 		if let Some(ref mut text) = text {
 			text.set_font(font);
@@ -138,7 +138,7 @@ impl<'a> Pressure<'a> {
 
 	fn neutralize(&mut self) {
 		if let Some(ref mut text) = self.text {
-			text.set_string(self.script.as_str());
+			text.set_string(self.script);
 		}
 	}
 
