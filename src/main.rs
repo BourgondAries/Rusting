@@ -23,15 +23,27 @@ fn main() {
 	let mut view = window.get_view();
 	let font = sfml::graphics::Font::new_from_file("CelestiaMediumRedux1.55.ttf").expect("Could not load font file");
 	let message = String::from("Particles: ");
-	let mut pressure = Pressure::new(&font, &message);
+	let mut pressure = {
+		let mut pressure = Pressure::new(&font, &message);
+		pressure.set_position_from_corner(10.0, 10.0);
+		pressure
+	};
+	let message = String::from("Press Enter to spawn\nBackspace to remove\nArrows for movement\n=/- for zoom");
+	let start_text_value = {
+		let mut text = Pressure::new(&font, &message);
+		text.neutralize();
+		text.set_position(size.0 as f32 / 2.0, size.1 as f32 / 2.0);
+		text
+	};
+	let mut start_text = ConditionalDraw::new(&start_text_value);
 
 	while window.is_open() {
 		for event in window.events() { {
 				use sfml::window::event::KeyPressed;
 				use sfml::window::event::Closed;
 				macro_rules! sv {
-					($l:expr, $r:expr) => ( view.move2f($l, $r); window.set_view(&view) );
-					($z:expr) => ( view.zoom($z); window.set_view(&view) );
+					($l:expr, $r:expr) => ( view.move2f($l*50.0, $r*50.0); window.set_view(&view) );
+					($z:expr) => ( { view.zoom($z); window.set_view(&view) } );
 				}
 				match event {
 					Closed | event::KeyPressed { code: Key::W, ctrl: true, ..} => window.close(),
@@ -41,8 +53,8 @@ fn main() {
 					KeyPressed { code: Key::Right, ..} => { sv!(1.0, 0.0); }
 					KeyPressed { code: Key::Equal, ..} => { sv!(0.9); }
 					KeyPressed { code: Key::Dash, ..} => { sv!(1.1); }
-					KeyPressed { code: Key::Return, ..} => balls.new_random(),
-					KeyPressed { code: Key::BackSpace, ..} => balls.remove_front(),
+					KeyPressed { code: Key::Return, ..} => { balls.new_random(); start_text.set_draws(false); }
+					KeyPressed { code: Key::BackSpace, ..} => { balls.remove_front(); if balls.len() == 0 { start_text.set_draws(true) } }
 					_ => {}
 				}
 			}
@@ -61,13 +73,39 @@ fn main() {
 		window.draw(&balls);
 		window.draw(&fadeboundaries);
 		window.draw(&pressure);
+		window.draw(&start_text);
 		window.display()
+	}
+}
+
+struct ConditionalDraw<'a, T: 'a + sfml::graphics::Drawable> {
+	drawable: &'a T,
+	draw: bool
+}
+
+impl<'a, T> ConditionalDraw<'a, T> where T: 'a + sfml::graphics::Drawable {
+	fn new(draws: &'a T) -> ConditionalDraw<'a, T> {
+		ConditionalDraw {
+			drawable: draws,
+			draw: true,
+		}
+	}
+
+	fn set_draws(&mut self, value: bool) {
+		self.draw = value;
+	}
+}
+
+impl<'a, T> sfml::graphics::Drawable for ConditionalDraw<'a, T> where T: 'a + sfml::graphics::Drawable {
+	fn draw<RT: sfml::graphics::RenderTarget>(&self, target: &mut RT, _: &mut sfml::graphics::RenderStates) {
+		if self.draw {
+			target.draw(self.drawable);
+		}
 	}
 }
 
 struct Pressure<'a> {
 	text: Option<sfml::graphics::Text<'a>>,
-	font: &'a sfml::graphics::Font,
 	script: &'a String,
 }
 
@@ -79,7 +117,6 @@ impl<'a> Pressure<'a> {
 		}
 		Pressure {
 			text: text,
-			font: font,
 			script: script
 		}
 	}
@@ -87,7 +124,21 @@ impl<'a> Pressure<'a> {
 	fn set_position(&mut self, x: f32, y: f32) {
 		if let Some(ref mut text) = self.text {
 			use sfml::graphics::Transformable;
+			let bounds = text.get_local_bounds();
+			text.set_position2f(x - bounds.width / 2.0, y - bounds.height / 2.0);
+		}
+	}
+
+	fn set_position_from_corner(&mut self, x: f32, y: f32) {
+		if let Some(ref mut text) = self.text {
+			use sfml::graphics::Transformable;
 			text.set_position2f(x, y);
+		}
+	}
+
+	fn neutralize(&mut self) {
+		if let Some(ref mut text) = self.text {
+			text.set_string(self.script.as_str());
 		}
 	}
 
@@ -178,24 +229,12 @@ impl<'a> Ball<'a> {
 		}
 	}
 
-	fn get_position(&self) -> sfml::system::Vector2f {
-		use sfml::graphics::Transformable;
-		if let Some(ref value) = self.ball {
-			return value.get_position();
-		}
-		sfml::system::Vector2f { x: 0.0,  y: 0.0 }
-	}
-
 	fn set_size(&mut self, radius: f32) {
 		if let Some(ref mut value) = self.ball {
 			use sfml::graphics::Transformable;
 			value.set_radius(radius);
 			value.set_origin2f(radius, radius);
 		}
-	}
-
-	fn accelerate(&mut self, speed: Speed) {
-		self.speed = self.speed + speed;
 	}
 
 	fn where_out_of_bounds(&self, size: Size) -> OutBounds {
@@ -209,18 +248,6 @@ impl<'a> Ball<'a> {
 			}
 		} else {
 			OutBounds::default()
-		}
-	}
-
-	fn is_out_of_bounds(&self, size: Size) -> bool {
-		if let Some(ref shape) = self.ball {
-			use sfml::graphics::Transformable;
-			shape.get_position().x - shape.get_radius() < 0.0
-			|| shape.get_position().x + shape.get_radius() > size.0 as f32
-			|| shape.get_position().y - shape.get_radius() < 0.0
-			|| shape.get_position().y + shape.get_radius() > size.1 as f32
-		} else {
-			false
 		}
 	}
 
@@ -363,7 +390,6 @@ impl<'a> FadeBoundary<'a> {
 	fn new() -> FadeBoundary<'a> {
 		let mut rect = sfml::graphics::RectangleShape::new();
 		if let Some(ref mut shape) = rect {
-			use sfml::graphics::Transformable;
 			use sfml::graphics::Shape;
 			shape.set_size2f(10.0, 600.0);
 			shape.set_fill_color(&sfml::graphics::Color::new_rgba(255, 0, 0, 0));
@@ -380,14 +406,12 @@ impl<'a> FadeBoundary<'a> {
 
 	fn set_size(&mut self, x: f32, y: f32) {
 		if let Some(ref mut shape) = self.0 {
-			use sfml::graphics::Transformable;
 			shape.set_size2f(x, y);
 		}
 	}
 
 	fn set_color(&mut self) {
 		if let Some(ref mut shape) = self.0 {
-			use sfml::graphics::Transformable;
 			use sfml::graphics::Shape;
 			shape.set_fill_color(&sfml::graphics::Color::new_rgba(255, 0, 0, self.1 as u8));
 		}
@@ -415,14 +439,5 @@ impl<'s> sfml::graphics::Drawable for FadeBoundary<'s> {
 			Some(ref value) => target.draw(value),
 			None => {}
 		}
-	}
-}
-
-impl OutBounds {
-	fn interesting(&self) -> bool {
-		self.left > 0
-		|| self.top > 0
-		|| self.right > 0
-		|| self.bottom > 0
 	}
 }
