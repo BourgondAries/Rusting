@@ -23,11 +23,8 @@ fn main() {
 	let mut view = window.get_view();
 	let font = sfml::graphics::Font::new_from_file("CelestiaMediumRedux1.55.ttf").expect("Could not load font file");
 	let message = "Particles: ";
-	let mut pressure = {
-		let mut pressure = Pressure::new(&font, message);
-		pressure.set_position_from_corner(10.0, 10.0);
-		pressure
-	};
+	let mut pressure = Pressure::new(&font, message);
+	pressure.set_position_from_corner(10.0, 10.0);
 	let message = "Press Enter to spawn\nBackspace to remove\nArrows for movement\n=/- for zoom";
 	let start_text_value = {
 		let mut text = Pressure::new(&font, message);
