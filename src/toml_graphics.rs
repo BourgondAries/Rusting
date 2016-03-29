@@ -31,9 +31,10 @@ pub fn read_toml<F>(display: &F, filename: &str) -> (VertexBuffer<Vertex>, Verte
 			panic!();
 		}
 	};
+	let val: toml::Value = toml::Value::Table(toml.clone());
 	(create_vertex_buffer(display, &toml),
 	create_normal_buffer(display, &toml),
-	create_face_buffer(display, &toml))
+	create_face_buffer(display, &val))
 }
 
 fn create_normal_buffer<F>(display: &F, table: &toml::Table) -> VertexBuffer<Normal> where F: Facade {
@@ -70,19 +71,12 @@ fn create_normal_buffer<F>(display: &F, table: &toml::Table) -> VertexBuffer<Nor
 	VertexBuffer::new(display, &vector).unwrap()
 }
 
-fn create_face_buffer<F>(display: &F, table: &toml::Table) -> IndexBuffer<u32> where F: Facade {
+fn create_face_buffer<F>(display: &F, table: &toml::Value) -> IndexBuffer<u32> where F: Facade {
 	use toml::Value;
-	let toml = match table["object"] {
-		Value::Array(ref array) => array,
-		_ => panic!("No array"),
-	};
-	let toml = match toml[0] {
-		Value::Table(ref table) => table,
-		_ => panic!("No table"),
-	};
-	let toml = match toml["faces"] {
-		Value::Array(ref list) => list,
-		_ => panic!("No list"),
+	let toml = table.lookup("object.0.faces").expect("fine");
+	let toml = match toml {
+		&Value::Array(ref arr) => arr,
+		_ => panic!("My error"),
 	};
 	let mut vector = Vec::new();
 	for float in toml.chunks(3) {
