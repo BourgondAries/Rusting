@@ -1,11 +1,10 @@
 extern crate rand;
 extern crate sfml;
-extern crate toml;
-
 
 fn main() {
 	use sfml::window::{ContextSettings, VideoMode, Key, event, window_style};
 	use sfml::graphics::{RenderWindow, RenderTarget, Color, Transformable};
+
 
 	let size = Size(800, 600);
 
